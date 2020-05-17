@@ -10,6 +10,9 @@ is_prime(0) -> false;
 is_prime(1) -> false;
 is_prime(N) -> is_prime(N, 1, 1).
 
+find_prime_integers(Integers) ->
+    [is_prime(X) || X <- Integers].
+
 compute_prime(Integers) -> Integers.
 
 spawn_slaves(0) -> [];
