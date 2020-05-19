@@ -1,6 +1,6 @@
 -module(master).
 
--export([new/1, split_integers_in_parcels/2]).
+-export([new/1]).
 
 new(Master) ->
     register(Master,
@@ -11,6 +11,8 @@ new(Master) ->
 %% Fault error controls missing:
 %% - If slave dies before sending the result message of the prime compute, the result check will be inconsistent
 %% - Term dictionary is probably not concurrent-safe? So multiple read-write might cause inconsistencies
+%% - term_storage is currently a singleton with tsp as registered alias, second call of new causes badarg
+%% - modules are not linked to each other, causes badarg if dependant modules are not compiled previously
 
 loop_operations(Master) ->
     receive
