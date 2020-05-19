@@ -1,4 +1,4 @@
-%% Asynchronous term storage
+%% Synchronous term storage
 %% Uses process dictionary as term storage
 -module(term_storage).
 
