@@ -13,6 +13,7 @@ new(Master) ->
 %% - Term dictionary is probably not concurrent-safe? So multiple read-write might cause inconsistencies
 %% - term_storage is currently a singleton with tsp as registered alias, second call of new causes badarg
 %% - modules are not linked to each other, causes badarg if dependant modules are not compiled previously
+%% - term_storage is currently shared to all proceses due to tsp alias, meaning that spawn_new_slaves called on different processes will overwrite the existing slaves
 
 loop_operations(Master) ->
     receive
@@ -46,7 +47,13 @@ spawn_slaves(N) ->
       [spawn(fun slave:handle_request/0)].
 
 store_slaves(Slaves) ->
-    term_storage:store(slaves, Slaves).
+    ExistingSlaves = term_storage:lookup(slaves),
+    case ExistingSlaves of
+      undefined -> term_storage:store(slaves, Slaves);
+      _ ->
+	  UpdatedSlaves = Slaves ++ ExistingSlaves,
+	  term_storage:store(slaves, UpdatedSlaves)
+    end.
 
 link_on_exit_slaves([], _) -> [];
 link_on_exit_slaves([H | T], Fun) ->
