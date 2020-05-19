@@ -106,7 +106,7 @@ distribute_parcels(Master, [HP | TP], [HS | TS],
     distribute_parcels(Master, TP, TS, UUID).
 
 split_integers_in_parcels(Integers, ParcelFactor) ->
-    case length(Integers) =< ParcelFactor of
+    case length(Integers) =< ParcelFactor * 1.5 of
       true -> [Integers];
       false ->
 	  A = round(length(Integers) / 2),
