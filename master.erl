@@ -8,6 +8,10 @@ new(Master) ->
 			   term_storage:start(), loop_operations(Master)
 		   end)).
 
+%% Fault error controls missing:
+%% - If slave dies before sending the result message of the prime compute, the result check will be inconsistent
+%% - Term dictionary is probably not concurrent-safe? So multiple read-write might cause inconsistencies
+
 loop_operations(Master) ->
     receive
       {FromPid, {spawn_slaves, N}} ->
@@ -25,7 +29,11 @@ loop_operations(Master) ->
     end.
 
 spawn_new_slaves(N) ->
-    OnExitFun = fun (SPid) -> term_storage:remove(SPid) end,
+    OnExitFun = fun (SPid) ->
+			Slaves = term_storage:lookup(slaves),
+			UpdatedSlaves = lists:delete(SPid, Slaves),
+			term_storage:put(slaves, UpdatedSlaves)
+		end,
     Slaves = spawn_slaves(N),
     store_slaves(Slaves),
     link_on_exit_slaves(Slaves, OnExitFun).
