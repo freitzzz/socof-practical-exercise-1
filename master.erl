@@ -19,8 +19,7 @@ loop_operations(Master) ->
 	  FromPid ! {Master, Code},
 	  loop_operations(Master);
       {FromPid, {result_compute_prime, Result, UUID}} ->
-	  io:format("Result Prime Computation: ~w UUID: ~w~n",
-		    [Result, UUID]),
+	  on_result_compute_prime(Result, UUID),
 	  FromPid ! {Master, ok},
 	  loop_operations(Master)
     end.
@@ -51,6 +50,22 @@ on_exit(Pid, Fun) ->
 		    {'EXIT', Pid, _} -> io:format("Dead ~n"), Fun(Pid)
 		  end
 	  end).
+
+on_result_compute_prime(Result, UUID) ->
+    io:format("Result Prime Computation: ~w UUID: ~w~n",
+	      [Result, UUID]),
+    {ParcelsLength, ResultList} = term_storage:lookup(UUID),
+    NewResultList = [Result] ++ ResultList,
+    case ParcelsLength == length(NewResultList) of
+      true ->
+	  ResultComputePrime = lists:sum(NewResultList),
+	  io:format("Compute Prime Completed for Request "
+		    "#~w with the result: ~w~n",
+		    [UUID, ResultComputePrime]),
+	  term_storage:remove(UUID);
+      false ->
+	  term_storage:store(UUID, {ParcelsLength, NewResultList})
+    end.
 
 distribute_load(Master, Integers) ->
     AvailableSlaves = term_storage:lookup(slaves),
