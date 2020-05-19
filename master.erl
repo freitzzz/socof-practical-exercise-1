@@ -15,12 +15,12 @@ loop_operations(Master) ->
 	  FromPid ! {Master, ok},
 	  loop_operations(Master);
       {FromPid, {distribute_load, Integers}} ->
-	  AvailableSlaves = term_storage:lookup(slaves),
-	  distribute_load(Master, Integers, AvailableSlaves),
-	  FromPid ! {Master, ok},
+	  Code = distribute_load(Master, Integers),
+	  FromPid ! {Master, Code},
 	  loop_operations(Master);
-      {FromPid, {result_compute_prime, Result}} ->
-	  io:format("Result Prime Computation: ~w~n", [Result]),
+      {FromPid, {result_compute_prime, Result, UUID}} ->
+	  io:format("Result Prime Computation: ~w UUID: ~w~n",
+		    [Result, UUID]),
 	  FromPid ! {Master, ok},
 	  loop_operations(Master)
     end.
@@ -52,17 +52,26 @@ on_exit(Pid, Fun) ->
 		  end
 	  end).
 
-distribute_load(Master, Integers, Slaves) ->
+distribute_load(Master, Integers) ->
+    AvailableSlaves = term_storage:lookup(slaves),
+    Parcels = distribute_load_in_parcels(Integers,
+					 AvailableSlaves),
+    UUID = erlang:timestamp(),
+    term_storage:store(UUID, {length(Parcels), []}),
+    distribute_parcels(Master, Parcels, AvailableSlaves,
+		       UUID),
+    ok.
+
+distribute_load_in_parcels(Integers, Slaves) ->
     ParcelFactor = round(length(Integers) / length(Slaves))
 		     + 1,
-    Parcels = split_integers_in_parcels(Integers,
-					ParcelFactor),
-    distribute_parcels(Master, Parcels, Slaves).
+    split_integers_in_parcels(Integers, ParcelFactor).
 
-distribute_parcels(_, [], _) -> [];
-distribute_parcels(Master, [HP | TP], [HS | TS]) ->
-    HS ! {Master, {compute_prime, HP}},
-    distribute_parcels(Master, TP, TS).
+distribute_parcels(_, [], _, _) -> [];
+distribute_parcels(Master, [HP | TP], [HS | TS],
+		   UUID) ->
+    HS ! {Master, {compute_prime, HP, UUID}},
+    distribute_parcels(Master, TP, TS, UUID).
 
 split_integers_in_parcels(Integers, ParcelFactor) ->
     case length(Integers) =< ParcelFactor of
