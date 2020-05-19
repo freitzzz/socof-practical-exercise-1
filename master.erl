@@ -1,6 +1,6 @@
 -module(master).
 
--export([new/1]).
+-export([new/1, split_integers_in_parcels/2]).
 
 new(Master) ->
     register(Master,
@@ -53,7 +53,10 @@ on_exit(Pid, Fun) ->
 	  end).
 
 distribute_load(Master, Integers, Slaves) ->
-    Parcels = split_integers_in_parcels(Integers),
+    ParcelFactor = round(length(Integers) / length(Slaves))
+		     + 1,
+    Parcels = split_integers_in_parcels(Integers,
+					ParcelFactor),
     distribute_parcels(Master, Parcels, Slaves).
 
 distribute_parcels(_, [], _) -> [];
@@ -61,12 +64,12 @@ distribute_parcels(Master, [HP | TP], [HS | TS]) ->
     HS ! {Master, {compute_prime, HP}},
     distribute_parcels(Master, TP, TS).
 
-split_integers_in_parcels(Integers) ->
-    case length(Integers) =< 10 of
+split_integers_in_parcels(Integers, ParcelFactor) ->
+    case length(Integers) =< ParcelFactor of
       true -> [Integers];
       false ->
 	  A = round(length(Integers) / 2),
 	  {L1, L2} = lists:split(A, Integers),
-	  split_integers_in_parcels(L1) ++
-	    split_integers_in_parcels(L2)
+	  split_integers_in_parcels(L1, ParcelFactor) ++
+	    split_integers_in_parcels(L2, ParcelFactor)
     end.
