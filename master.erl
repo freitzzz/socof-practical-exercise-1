@@ -20,12 +20,13 @@ loop_operations(Master) ->
 	  spawn_new_slaves(N),
 	  FromPid ! {Master, ok},
 	  loop_operations(Master);
-      {FromPid, {distribute_load, Integers}} ->
-	  Code = distribute_load(Master, Integers),
+      {FromPid, {compute_prime, Integers}} ->
+	  Code = distribute_load_compute_prime(Master, Integers,
+					       FromPid),
 	  FromPid ! {Master, Code},
 	  loop_operations(Master);
-      {FromPid, {result_compute_prime, Result, UUID}} ->
-	  on_result_compute_prime(Result, UUID),
+      {FromPid, {result_compute_prime_slave, Result, UUID}} ->
+	  on_result_compute_prime_slave(Result, UUID),
 	  FromPid ! {Master, ok},
 	  loop_operations(Master)
     end.
@@ -67,10 +68,11 @@ on_exit(Pid, Fun) ->
 		  end
 	  end).
 
-on_result_compute_prime(Result, UUID) ->
+on_result_compute_prime_slave(Result, UUID) ->
     io:format("Result Prime Computation: ~w UUID: ~w~n",
 	      [Result, UUID]),
-    {ParcelsLength, ResultList} = term_storage:lookup(UUID),
+    {ParcelsLength, ResultList, FromPid} =
+	term_storage:lookup(UUID),
     NewResultList = [Result] ++ ResultList,
     case ParcelsLength == length(NewResultList) of
       true ->
@@ -78,17 +80,21 @@ on_result_compute_prime(Result, UUID) ->
 	  io:format("Compute Prime Completed for Request "
 		    "#~w with the result: ~w~n",
 		    [UUID, ResultComputePrime]),
-	  term_storage:remove(UUID);
+	  term_storage:remove(UUID),
+	  FromPid ! {result_compute_prime, ResultComputePrime};
       false ->
-	  term_storage:store(UUID, {ParcelsLength, NewResultList})
+	  term_storage:store(UUID,
+			     {ParcelsLength, NewResultList, FromPid})
     end.
 
-distribute_load(Master, Integers) ->
+distribute_load_compute_prime(Master, Integers,
+			      FromPid) ->
     AvailableSlaves = term_storage:lookup(slaves),
     Parcels = distribute_load_in_parcels(Integers,
 					 AvailableSlaves),
     UUID = erlang:timestamp(),
-    term_storage:store(UUID, {length(Parcels), []}),
+    term_storage:store(UUID,
+		       {length(Parcels), [], FromPid}),
     distribute_parcels(Master, Parcels, AvailableSlaves,
 		       UUID),
     ok.
@@ -101,7 +107,7 @@ distribute_load_in_parcels(Integers, Slaves) ->
 distribute_parcels(_, [], _, _) -> [];
 distribute_parcels(Master, [HP | TP], [HS | TS],
 		   UUID) ->
-    HS ! {Master, {compute_prime, HP, UUID}},
+    HS ! {Master, {compute_prime_slave, HP, UUID}},
     distribute_parcels(Master, TP, TS, UUID).
 
 split_integers_in_parcels(Integers, ParcelFactor) ->

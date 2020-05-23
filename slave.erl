@@ -4,9 +4,9 @@
 
 handle_request() ->
     receive
-      {FromPid, {compute_prime, Integers, UUID}} ->
+      {FromPid, {compute_prime_slave, Integers, UUID}} ->
 	  Result = prime_operations:compute_prime(Integers),
 	  FromPid !
-	    {self(), {result_compute_prime, Result, UUID}},
+	    {self(), {result_compute_prime_slave, Result, UUID}},
 	  handle_request()
     end.
