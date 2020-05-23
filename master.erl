@@ -34,7 +34,7 @@ spawn_new_slaves(N) ->
     OnExitFun = fun (SPid) ->
 			Slaves = term_storage:lookup(slaves),
 			UpdatedSlaves = lists:delete(SPid, Slaves),
-			term_storage:put(slaves, UpdatedSlaves)
+			term_storage:store(slaves, UpdatedSlaves)
 		end,
     Slaves = spawn_slaves(N),
     store_slaves(Slaves),
