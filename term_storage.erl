@@ -5,7 +5,11 @@
 -export([lookup/1, remove/1, start/0, stop/0, store/2]).
 
 start() ->
-    register(tsp, spawn(fun () -> loop_operations() end)).
+    case whereis(tsp) of
+      undefined ->
+	  register(tsp, spawn(fun () -> loop_operations() end));
+      _ -> ok
+    end.
 
 %% Not working :(
 stop() -> exit(whereis(tsp), normal).
@@ -24,11 +28,13 @@ operation_handler(Operation) ->
 loop_operations() ->
     receive
       {FromPid, {store, Key, Value}} ->
-	  put(Key, Value),
+	  put({FromPid, Key}, Value),
 	  FromPid ! {tsp, Value},
 	  loop_operations();
       {FromPid, {remove, Key}} ->
-	  erase(Key), FromPid ! {tsp, ok}, loop_operations();
+	  erase({FromPid, Key}),
+	  FromPid ! {tsp, ok},
+	  loop_operations();
       {FromPid, {lookup, Key}} ->
-	  FromPid ! {tsp, get(Key)}, loop_operations()
+	  FromPid ! {tsp, get({FromPid, Key})}, loop_operations()
     end.

@@ -11,10 +11,7 @@ new(Master) ->
 %% Fault error controls missing:
 %% - If slave dies before sending the result message of the prime compute, the result check will be inconsistent
 %% - Term dictionary is probably not concurrent-safe? So multiple read-write might cause inconsistencies
-%% - term_storage is currently a singleton with tsp as registered alias, second call of new causes badarg
 %% - modules are not linked to each other, causes badarg if dependant modules are not compiled previously
-%% - term_storage is currently shared to all proceses due to tsp alias, meaning that spawn_new_slaves called on different processes will overwrite the existing slaves
-
 %% Needs adjustements on split integers list in parcels algorithm
 
 loop_operations(Master) ->
