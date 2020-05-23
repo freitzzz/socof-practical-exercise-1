@@ -1,4 +1,5 @@
-%% Synchronous term storage
+%% Synchronous term storage using module functions
+%% Asynchronous term storage by communicating with process registered under tsp alias
 %% Uses process dictionary as term storage
 -module(term_storage).
 
