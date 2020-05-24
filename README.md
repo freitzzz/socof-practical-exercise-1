@@ -4,6 +4,8 @@ In order to conceive a solution for the given problem, modularity and SRP (Singl
 
 ![solution_overview](diagrams/res/master_slaves_work_distribution.png)
 
+<center>Figure 1 - GPNL Diagram illustrating the overview of the solution</center>
+
 ## Communication Interfaces
 
 All communication is asynchronous using messages between processes, except for `term_storage` in which the module functions are used, which are blocking calls.
