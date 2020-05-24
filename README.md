@@ -28,7 +28,7 @@ All communication is asynchronous using messages between processes, except for `
 |-----|--------|-----|-----------|
 |Term Storage users|`{FromPid, {store, Key, Value}}`|`{tsp, Value}`|Receives request to store a value identified by `Key`|
 |Term Storage users|`{FromPid, {remove, Key}}`|`{tsp, ok}`|Receives request to delete the value identified by `Key`|
-|Term Storage users|`{FromPid, {lookup, Key}}`|`{tsp, Value`|Receives request to retrieve the value identified by `Key`|
+|Term Storage users|`{FromPid, {lookup, Key}}`|`{tsp, Value}`|Receives request to retrieve the value identified by `Key`|
 
 **Work Distributon**
 
@@ -36,6 +36,10 @@ All communication is asynchronous using messages between processes, except for `
 |-----|--------|-----|-----------|
 |Master|`{result_compute_prime, ResultComputePrime}`|--|Receives result of a prime computation|
 
+
+## Future Improvements
+
+The current load-balancing algorithm (split integers array in parcels) works but has no optimizations regarding the array length and other factors such as available slaves number.
 
 ## Run
 
