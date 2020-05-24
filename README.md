@@ -8,7 +8,8 @@ In order to conceive a solution for the given problem, modularity and SRP (Singl
 
 ## Communication Interfaces
 
-All communication is asynchronous using messages between processes, except for `term_storage` in which the module functions are used, which are blocking calls.
+All communication is asynchronous using messages between processes. Term Storage users can synchronously communicate using the module functions (`lookup/1, lookup/2, remove/1, start/0, stop/0,
+	 store/2`) which are blocking calls.
 
 **Master**
 
