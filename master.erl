@@ -32,8 +32,9 @@ loop_operations(Master) ->
     end.
 
 spawn_new_slaves(N) ->
+    MPid = self(),
     OnExitFun = fun (SPid) ->
-			Slaves = term_storage:lookup(slaves),
+			Slaves = term_storage:lookup(slaves, MPid),
 			UpdatedSlaves = lists:delete(SPid, Slaves),
 			term_storage:store(slaves, UpdatedSlaves)
 		end,
@@ -69,17 +70,12 @@ on_exit(Pid, Fun) ->
 	  end).
 
 on_result_compute_prime_slave(Result, UUID) ->
-    io:format("Result Prime Computation: ~w UUID: ~w~n",
-	      [Result, UUID]),
     {ParcelsLength, ResultList, FromPid} =
 	term_storage:lookup(UUID),
     NewResultList = [Result] ++ ResultList,
     case ParcelsLength == length(NewResultList) of
       true ->
 	  ResultComputePrime = lists:sum(NewResultList),
-	  io:format("Compute Prime Completed for Request "
-		    "#~w with the result: ~w~n",
-		    [UUID, ResultComputePrime]),
 	  term_storage:remove(UUID),
 	  FromPid ! {result_compute_prime, ResultComputePrime};
       false ->

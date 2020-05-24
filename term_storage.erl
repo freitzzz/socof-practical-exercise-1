@@ -3,7 +3,8 @@
 %% Uses process dictionary as term storage
 -module(term_storage).
 
--export([lookup/1, remove/1, start/0, stop/0, store/2]).
+-export([lookup/1, lookup/2, remove/1, start/0, stop/0,
+	 store/2]).
 
 start() ->
     case whereis(tsp) of
@@ -16,14 +17,17 @@ start() ->
 stop() -> exit(whereis(tsp), normal).
 
 store(Key, Value) ->
-    operation_handler({store, Key, Value}).
+    operation_handler({store, Key, Value}, self()).
 
-remove(Key) -> operation_handler({remove, Key}).
+remove(Key) -> operation_handler({remove, Key}, self()).
 
-lookup(Key) -> operation_handler({lookup, Key}).
+lookup(Key) -> operation_handler({lookup, Key}, self()).
 
-operation_handler(Operation) ->
-    tsp ! {self(), Operation},
+lookup(Key, FromPid) ->
+    operation_handler({lookup, Key}, FromPid).
+
+operation_handler(Operation, FromPid) ->
+    tsp ! {FromPid, Operation},
     receive {tsp, Reply} -> Reply end.
 
 loop_operations() ->
